@@ -1,0 +1,43 @@
+# Python & venv
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env
+
+# Data & models
+data/
+*.csv
+*.parquet
+*.pkl
+*.h5
+*.bento
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# IDEs
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Feature store
+.feast/
+data/registry.db
+data/online_store.db
+
+# BentoML
+bentoml_models/
+bentoml_bundle/
+
+# Docker
+#! Ignore override files used for local testing but not prod
+docker-compose.override.yaml
+
+# Quix streams
+state/
