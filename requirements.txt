@@ -1,0 +1,12 @@
+pandas>=2.0.0 # Data cleaning and feature preparation
+scikit-learn>=1.3.0 # Train and evaluate ML models
+quixstreams>=2.4.0 # Real-time stream processing on Kafka
+kafka-python-ng>=2.2.0 # Produce and consume Kafka messages
+redis>=5.0.0 # Fast cache and in-memory state store
+feast>=0.37.0 # Consistent features for training and inference
+bentoml>=1.2.0 # Deploy ML models as APIs
+evidently>=0.4.0 # Monitor data and model drift
+pyyaml # Load configuration files
+ensure # Validate inputs and configs early
+box # Cleaner access to config values
+types-PyYAML # Type hints for YAML configs
