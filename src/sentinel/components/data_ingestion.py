@@ -61,6 +61,7 @@ class DataIngestion:
                 # Produce to Topic
                 producer.produce(
                     topic=self.topic.name,
+                    key=message['protocol_type'],
                     value=json.dumps(message)
                 )
                 
