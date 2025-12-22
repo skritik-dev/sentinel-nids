@@ -12,7 +12,7 @@ class SentinelService:
         Real-time Inference Endpoint.
         """
         # Prepare Vector (Order must match with order during training)
-        features = [req.src_bytes, req.dst_bytes, req.duration, req.count, req.srv_count]
+        features = [req["src_bytes"], req["dst_bytes"], req["duration"], req["count"], req["srv_count"]]
         vector = np.array([features])
         
         # Prediction
@@ -23,10 +23,10 @@ class SentinelService:
             "prediction": result,
             "score": int(prediction[0]),
             "input_echo": {
-                "src_bytes": req.src_bytes,
-                "dst_bytes": req.dst_bytes,
-                "duration": req.duration,
-                "count": req.count,
-                "srv_count": req.srv_count
+                "src_bytes": req["src_bytes"],
+                "dst_bytes": req["dst_bytes"],
+                "duration": req["duration"],
+                "count": req["count"],
+                "srv_count": req["srv_count"]
             }
         }

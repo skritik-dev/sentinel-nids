@@ -1,3 +1,5 @@
+import os
+import csv
 import json
 import requests
 import pandas as pd
@@ -17,6 +19,14 @@ class StreamProcessor:
         )
         self.topic = self.app.topic(name=topic_name, value_serializer="json")
         self.fs = FeatureStore(repo_path="features/")
+
+    def log_prediction(self, packet_id, timestamp, prediction, score):
+        file_exists = os.path.isfile("data/predictions.csv")
+        with open("data/predictions.csv", "a", newline="") as f:
+            writer = csv.writer(f)
+            if not file_exists:
+                writer.writerow(["timestamp", "packet_id", "prediction", "score"])
+            writer.writerow([timestamp, packet_id, prediction, score])
 
     def process_message(self, message):
         try:
@@ -45,9 +55,12 @@ class StreamProcessor:
             if response.status_code == 200:
                 result = response.json()
                 pred = result["prediction"]
+                res = result["score"]
+
+                self.log_prediction(feature_row["packet_id"], feature_row["event_timestamp"], pred, res)
                 
                 if pred == "Anomaly":
-                    logger.error(f"ALERT! Anomaly Detected in Packet {feature_row['packet_id']}! Score: {result['score']}")
+                    logger.error(f"ALERT! Anomaly Detected in Packet {feature_row['packet_id']}! Score: {res}")
                 else:
                     logger.info(f"Packet {feature_row['packet_id']} is Normal")
             else:
@@ -55,6 +68,7 @@ class StreamProcessor:
 
         except Exception as e:
             logger.error(f"Failed to process message: {e}")
+
 
     def start(self):
         logger.info("Starting Stream Processor")
