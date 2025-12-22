@@ -56,6 +56,7 @@ class DataIngestion:
                 
                 # Create Message
                 message = row.to_dict()
+                message['packet_id'] = str(count)
                 message['timestamp'] = time.time()  # Add ingestion time
                 
                 # Produce to Topic
@@ -70,7 +71,7 @@ class DataIngestion:
                 count += 1
                 time.sleep(sleep_time) # Simulate real-time delay
 
-        logger.info("Ingestion complete.")
+        logger.info("Ingestion complete")
 
 if __name__ == "__main__":
     FILE_PATH = "data/kdd_train.csv"

@@ -4,6 +4,7 @@ from feast import (
     FeatureView,
     Field,
     FileSource,
+    PushSource
 )
 from feast.types import Float32, Int64, String
 from feast.value_type import ValueType
@@ -15,11 +16,17 @@ packet = Entity(
     value_type=ValueType.STRING
 )
 
-# Define data source
-packet_source = FileSource(
-    name="packet_source",
+# Define batch source (for training)
+packet_batch_source = FileSource(
+    name="packet_batch_source",
     path="../data/kdd_train.parquet",
     timestamp_field="event_timestamp",
+)
+
+# Define push source (for serving)
+packet_push_source = PushSource(
+    name="packet_push_source",
+    batch_source=packet_batch_source,
 )
 
 # Define entity feature view
@@ -38,6 +45,6 @@ packet_features = FeatureView(
         Field(name="flag", dtype=String),
     ],
     online=True,  #? Enable syncing to Redis
-    source=packet_source,
+    source=packet_push_source,
     tags={"team": "security"},
 )
