@@ -1,0 +1,21 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy source code
+COPY src/ src/
+COPY data/ data/
+
+ENV BENTOML_HOME=/root/bentoml
+RUN mkdir -p $BENTOML_HOME/models/sentinel_model/latest
+
+# Copy the model from the CI builder into the image.
+COPY model_store/ $BENTOML_HOME/models/sentinel_model/latest/
+
+EXPOSE 3000
+
+CMD ["bentoml", "serve", "src.sentinel.service:SentinelService", "--host", "0.0.0.0", "--port", "3000"]

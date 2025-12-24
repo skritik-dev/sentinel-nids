@@ -1,12 +1,15 @@
 import bentoml
 import numpy as np
+from sentinel.logger import get_logger
+
+logger = get_logger("APIService")
 
 @bentoml.service(name="sentinel_nids")
 class SentinelService:
     def __init__(self):
         self.model = bentoml.sklearn.load_model("sentinel_model:latest")
 
-    @bentoml.api
+    @bentoml.api    
     def predict(self, req: dict) -> dict:
         """
         Real-time Inference Endpoint.
@@ -16,6 +19,7 @@ class SentinelService:
         vector = np.array([features])
         
         # Prediction
+        logger.info("Predicting anomaly for input vector")
         prediction = self.model.predict(vector)
         result = "Anomaly" if prediction[0] == -1 else "Normal"
         

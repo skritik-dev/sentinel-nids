@@ -1,6 +1,7 @@
 import os
 import csv
 import json
+import redis
 import requests
 import pandas as pd
 from quixstreams import Application
@@ -23,6 +24,37 @@ class StreamProcessor:
         self.topic = self.app.topic(name=topic_name, value_serializer="json")
         self.fs = FeatureStore(repo_path="features/")
 
+        try:
+            self.redis_client = redis.Redis(host="redis", port=6379, db=0)
+            self.redis_client.ping() # Check connection
+            logger.info("Connected to Redis for State Management")
+        except Exception as e:
+            logger.error(f"Redis Connection Failed: {e}")
+            self.redis_client = None
+
+    def log_training_data(self, payload):
+        directory = "/app/data"
+        file_path = f"{directory}/live_traffic.csv"
+        
+        # TODO: In a real time system, we need to save all the columns
+        columns = ["src_bytes", "dst_bytes", "duration", "count", "srv_count"]
+        
+        try:
+            file_exists = os.path.isfile(file_path)
+            with open(file_path, "a", newline="", buffering=1) as f:
+                writer = csv.DictWriter(f, fieldnames=columns)
+                
+                if not file_exists:
+                    writer.writeheader()
+            
+                writer.writerow(payload)
+    
+                f.flush()
+                os.fsync(f.fileno())
+                
+        except Exception as e:
+            logger.error(f"Failed to log training data: {e}")
+
     def log_prediction(self, packet_id, timestamp, prediction, score):
         file_exists = os.path.isfile("/app/data/predictions.csv")
         with open("/app/data/predictions.csv", "a", newline="") as f:
@@ -31,17 +63,38 @@ class StreamProcessor:
                 writer.writerow(["timestamp", "packet_id", "prediction", "score"])
             writer.writerow([timestamp, packet_id, prediction, score])
 
+    def get_real_time_count(self, ip_identifier):
+        """Uses Redis to count traffic in a 2-second sliding window."""
+        if not self.redis_client:
+            return 0
+            
+        key = f"count:{ip_identifier}"
+        
+        # Increment counter
+        current_count = self.redis_client.incr(key)
+        
+        # Set expiry (TTL) on first packet to create a "Sliding Window"
+        if current_count == 1:
+            self.redis_client.expire(key, 2)
+            
+        return float(current_count)
+    
     def process_message(self, message):
         try:
+            simulated_ip = f"{message.get('protocol_type')}_{message.get('service')}"
+            real_count = self.get_real_time_count(simulated_ip)
+            
             # Extract Features for model input
             payload = {
                 "src_bytes": float(message.get("src_bytes", 0)),
                 "dst_bytes": float(message.get("dst_bytes", 0)),
                 "duration": float(message.get("duration", 0)),
-                "count": float(message.get("count", 0)),
+                "count": real_count,
                 "srv_count": float(message.get("srv_count", 0))
             }
 
+            self.log_training_data(payload)
+            
             # Push to Feast 
             #? Feast expects a list of dictionaries or a DataFrame
             feature_row = payload.copy()

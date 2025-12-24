@@ -13,12 +13,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-COPY sentinel_model.bentomodel .
-
-RUN bentoml models import /app/sentinel_model.bentomodel
-
 RUN pip install -e .
 
 RUN mkdir -p /data
-
-CMD ["python", "src/sentinel/service.py"]   

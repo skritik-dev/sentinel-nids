@@ -1,9 +1,15 @@
+import os
 import pandas as pd
 import bentoml
 from sklearn.ensemble import IsolationForest
+from streamlit import columns
 from sentinel.logger import get_logger
 
 logger = get_logger("ModelTraining")
+
+#? For docker environments, these paths should have "app/ prefix
+OLD_DATA_PATH = "data/kdd_train.parquet"
+NEW_DATA_PATH = "data/live_traffic.csv"
 
 #? I'll use numerical features for my Isolation Forest
 FEATURES = [
@@ -14,16 +20,44 @@ FEATURES = [
     "srv_count"
 ]
 
-def train_model():
-    logger.info("Loading historical data for training")
-    
-    try:
-        df = pd.read_parquet("data/kdd_train.parquet")
-    except FileNotFoundError:
-        logger.error("Data not found!")
-        return
+def load_combined_data():
+    combined_df = pd.DataFrame()
 
-    X = df[FEATURES]
+    # Load old data
+    if os.path.exists(OLD_DATA_PATH):
+        logger.info(f"Loading old data from {OLD_DATA_PATH}")
+        try:
+            df_history = pd.read_parquet(OLD_DATA_PATH)
+            df_history = df_history[FEATURES]
+            combined_df = pd.concat([combined_df, df_history], ignore_index=True)
+            logger.info(f"Added {len(df_history)} old records")
+        except Exception as e:
+            logger.error(f"Failed to load old data: {e}")
+    else:
+        logger.warning(f"Old data not found at {OLD_DATA_PATH}")
+
+    # Load new data
+    if os.path.exists(NEW_DATA_PATH):
+        logger.info(f"Loading Live Traffic from {NEW_DATA_PATH}")
+        try:
+            # The CSV has headers because we wrote them in the processor
+            df_live = pd.read_csv(NEW_DATA_PATH)
+            if list(df_live.columns) != FEATURES:
+                df_live.columns = FEATURES
+                
+            df_live = df_live[FEATURES]
+            combined_df = pd.concat([combined_df, df_live], ignore_index=True)
+            logger.info(f"Added {len(df_live)} new live records")
+        except Exception as e:
+            logger.error(f"Failed to load live data: {e}")
+    else:
+        logger.info("No live data found!")
+
+    return combined_df
+
+def train_model():
+    logger.info("Starting Model Training Job")
+    X = load_combined_data()
     
     # Train Isolation Forest
     #? Contamination = 0.01 means we expect ~1% of traffic to be malicious, but in real life this should be ~6-7%

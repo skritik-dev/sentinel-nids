@@ -30,7 +30,9 @@ services:
 
   # API Service
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
     container_name: sentinel-api
     command: bentoml serve src.sentinel.service:SentinelService --host 0.0.0.0 --port 3000
     ports:
@@ -38,6 +40,7 @@ services:
     volumes:
       - ./src:/app/src
       - ./data:/app/data
+      - ${USERPROFILE}/bentoml:/root/bentoml
     depends_on:
       - redis
 

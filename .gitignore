@@ -7,12 +7,12 @@ venv/
 env/
 .env
 
-# Data & models
-data/
-*.csv
-*.parquet
-*.pkl
-*.h5
+# # Data & models
+# data/
+# *.csv
+# *.parquet
+# *.pkl
+# *.h5
 *.bentomodel
 
 # Logs
