@@ -39,7 +39,8 @@ jobs:
     # We need to move the saved model from the hidden system folder to the current folder so Docker can copy it
     - name: Export Model
       run: |
-        BENTO_PATH=$(bentoml models list sentinel_model -o json | jq -r '.[0].path')
+        echo "Reading model path"
+        BENTO_PATH=$(cat bento_model_path.txt)
         echo "Found model at: $BENTO_PATH"
         mkdir -p model_store
         cp -r $BENTO_PATH/* model_store/

@@ -90,6 +90,10 @@ def train_model():
     )
     
     logger.info(f"Model saved: {bento_model.tag}")
+    logger.info(f"Model path: {bento_model.path}")
+
+    with open("bento_model_path.txt", "w") as f:
+        f.write(str(bento_model.path))
 
 if __name__ == "__main__":
     train_model()
