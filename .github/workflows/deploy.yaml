@@ -44,11 +44,10 @@
         env:
           BENTOML_HOME: ${{ github.workspace }}/bento_storage
         run: |
+          echo "Checking the structure of BENTOML_HOME"
+          ls -R $BENTOML_HOME
+          echo "Checking BentoML registry"
           bentoml models list
-          mkdir -p model_export
-          bentoml models export sentinel_model:latest model_export/sentinel_model.bentomodel
-          mkdir -p model_store
-          tar -xf model_export/sentinel_model.bentomodel -C model_store/
 
       # Login to Docker Hub
       - name: Login to Docker Hub
