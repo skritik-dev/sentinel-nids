@@ -44,21 +44,11 @@
         env:
           BENTOML_HOME: ${{ github.workspace }}/bento_storage
         run: |
-          echo "Looking for model in bento_storage"
-          # The structure is: bento_storage/models/sentinel_model/<tag>/
-          # We list the folder to find the tag (version) generated 5 seconds ago
-          LATEST_TAG=$(ls -t $BENTOML_HOME/models/sentinel_model/ | head -n1)
-          echo "Found latest tag: $LATEST_TAG"
-          
-          # Construct the full path
-          MODEL_PATH="$BENTOML_HOME/models/sentinel_model/$LATEST_TAG"
-          
-          # Copy content to the build context folder
+          bentoml models list
+          mkdir -p model_export
+          bentoml models export sentinel_model:latest model_export/sentinel_model.bentomodel
           mkdir -p model_store
-          cp -r $MODEL_PATH/* model_store/
-          
-          echo "Model files copied to 'model_store/' successfully!"
-          ls -la model_store/
+          tar -xf model_export/sentinel_model.bentomodel -C model_store/
 
       # Login to Docker Hub
       - name: Login to Docker Hub
