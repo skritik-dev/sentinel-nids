@@ -1,4 +1,5 @@
 import os
+import sys
 import pandas as pd
 import bentoml
 from sklearn.ensemble import IsolationForest
@@ -7,7 +8,7 @@ from sentinel.logger import get_logger
 
 logger = get_logger("ModelTraining")
 
-#? For docker environments, these paths should have "app/ prefix
+#? For docker environments, these paths should have "app/" prefix
 OLD_DATA_PATH = "data/kdd_train.parquet"
 NEW_DATA_PATH = "data/live_traffic.csv"
 
@@ -58,6 +59,10 @@ def load_combined_data():
 def train_model():
     logger.info("Starting Model Training Job")
     X = load_combined_data()
+
+    if X.empty:
+        logger.error("No data found! Cannot train model. Check if 'data/kdd_train.parquet' is pushed to GitHub.")
+        sys.exit(1)  
     
     # Train Isolation Forest
     #? Contamination = 0.01 means we expect ~1% of traffic to be malicious, but in real life this should be ~6-7%
