@@ -8,6 +8,7 @@ on:
 
 env:
   DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/sentinel-api
+  PYTHONPATH: ${{ github.workspace }}/src
 
 jobs:
   build-and-push:
