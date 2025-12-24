@@ -1,0 +1,41 @@
+name: Sentinel CI Pipeline
+
+# Trigger: Run on every push to the main branch
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # Job 1: Quality Control (Linting & Testing)
+  test-and-lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        # We install only the libraries needed for testing/linting
+        pip install flake8 pytest 
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Lint with Flake8
+      # This checks for messy code or syntax errors
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+    - name: Run Unit Tests
+      # We haven't written tests yet, but this prepares the slot for them
+      run: |
+        echo "Running Tests"
+        # pytest (disabled until we write tests)
