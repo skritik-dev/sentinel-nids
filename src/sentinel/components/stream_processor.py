@@ -8,21 +8,24 @@ from feast import FeatureStore
 from sentinel.logger import get_logger
 
 logger = get_logger("StreamProcessor")
-API_URL = "http://localhost:3000/predict"
+API_URL = os.getenv("API_URL", "http://localhost:3000/predict")
 
 class StreamProcessor:
-    def __init__(self, topic_name="network-traffic", broker_addr="localhost:9092"):
+    def __init__(self, topic_name="network-traffic", broker_addr: str =None):
+        self.broker_addr = broker_addr or os.getenv("REDPANDA_BROKER", "localhost:9092")
+
         self.app = Application(
-            broker_address=broker_addr,
+            broker_address=self.broker_addr,
             consumer_group="feature-processor",
             auto_offset_reset="latest"
         )
+        
         self.topic = self.app.topic(name=topic_name, value_serializer="json")
         self.fs = FeatureStore(repo_path="features/")
 
     def log_prediction(self, packet_id, timestamp, prediction, score):
-        file_exists = os.path.isfile("data/predictions.csv")
-        with open("data/predictions.csv", "a", newline="") as f:
+        file_exists = os.path.isfile("/app/data/predictions.csv")
+        with open("/app/data/predictions.csv", "a", newline="") as f:
             writer = csv.writer(f)
             if not file_exists:
                 writer.writerow(["timestamp", "packet_id", "prediction", "score"])

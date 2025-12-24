@@ -1,3 +1,16 @@
+# Git
+.git/
+.gitignore
+
+# Documentation
+LICENSE
+
+# Notebooks
+notebooks/
+
+# CI/CD
+.github/
+
 # Python & venv
 __pycache__/
 *.py[cod]
@@ -7,13 +20,11 @@ venv/
 env/
 .env
 
-# Data & models
+# Data & models (exclude generated data, but keep specific models if needed)
 data/
-*.csv
-*.parquet
 *.pkl
 *.h5
-*.bentomodel
+*.bento
 
 # Logs
 logs/
@@ -36,12 +47,12 @@ bentoml_models/
 bentoml_bundle/
 
 # Docker
-#! Ignore override files used for local testing but not prod
 docker-compose.override.yaml
 
 # Quix streams
 state/
 
+# Build artifacts
 *.egg-info/
 dist/
 build/

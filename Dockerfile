@@ -1,0 +1,24 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+COPY sentinel_model.bentomodel .
+
+RUN bentoml models import /app/sentinel_model.bentomodel
+
+RUN pip install -e .
+
+RUN mkdir -p /data
+
+CMD ["python", "src/sentinel/service.py"]   

@@ -12,7 +12,7 @@ st.title("Sentinel Monitoring Dashboard")
 def load_data():
     columns = ["timestamp", "packet_id", "prediction", "score"]
     try: 
-        df = pd.read_csv("data/predictions.csv")
+        df = pd.read_csv("/app/data/predictions.csv")
         
         if list(df.columns) != columns:
             df.columns = columns
@@ -34,7 +34,7 @@ def run_realtime_dashboard():
     total_packets = len(df)
     anomaly_count = (df["prediction"] == "Anomaly").sum()
     normal_count = total_packets - anomaly_count
-    
+
     kpi1, kpi2, kpi3 = st.columns(3)
     kpi1.metric("Total Packets Scanned", total_packets)
     kpi2.metric("Normal Traffic", normal_count)
@@ -58,14 +58,14 @@ def run_realtime_dashboard():
 
     st.plotly_chart(
         fig,
-        use_container_width=True,
+        width='stretch',
         key="threat_chart" 
     )
 
     st.subheader("Recent Traffic Logs")
     st.dataframe(
         df.sort_values("timestamp", ascending=False).head(10),
-        use_container_width=True,
+        width='stretch',
         hide_index=True
     )
 

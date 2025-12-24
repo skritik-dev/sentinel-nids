@@ -1,3 +1,4 @@
+import os
 import time
 import json
 import pandas as pd
@@ -8,7 +9,7 @@ from sentinel.logger import get_logger
 logger = get_logger("DataIngestion")
 
 # Standard NSL-KDD column names
-COLUMNS = [
+COLUMNS = [ 
     "duration", "protocol_type", "service", "flag", "src_bytes", "dst_bytes",
     "land", "wrong_fragment", "urgent", "hot", "num_failed_logins",
     "logged_in", "num_compromised", "root_shell", "su_attempted", "num_root",
@@ -22,16 +23,16 @@ COLUMNS = [
 ]
 
 class DataIngestion:
-    def __init__(self, input_file: str, topic_name: str, broker_addr: str = "localhost:9092"):
+    def __init__(self, input_file: str, topic_name: str, broker_addr: str = None):
         self.input_file = input_file
         self.topic_name = topic_name
-        self.broker_addr = broker_addr
+        self.broker_addr = broker_addr or os.getenv("REDPANDA_BROKER", "localhost:9092")
         
         # Initialize Quix Application
         self.app = Application(broker_address=self.broker_addr, consumer_group="ingestion-producer")
         self.topic = self.app.topic(name=self.topic_name, value_serializer="json")
 
-    def start_ingestion(self, limit: int = None, sleep_time: float = 0.5):
+    def start_ingestion(self, sleep_time: float = 0.5):
         """
         Reads CSV and streams data to Redpanda.
         """
@@ -48,36 +49,33 @@ class DataIngestion:
         # Create Producer
         with self.app.get_producer() as producer:
             count = 0
-
+            while True:
             # Pandas row -> dict -> JSON
-            for _, row in df.iterrows():
-                if limit and count >= limit:
-                    break
-                
-                # Create Message
-                message = row.to_dict()
-                message['packet_id'] = str(count)
-                message['timestamp'] = time.time()  # Add ingestion time
-                
-                # Produce to Topic
-                producer.produce(
-                    topic=self.topic.name,
-                    key=message['protocol_type'],
-                    value=json.dumps(message)
-                )
-                
-                logger.info(f"Produced [{count}]: {message['protocol_type']} | {message['label']}")
-                
-                count += 1
-                time.sleep(sleep_time) # Simulate real-time delay
+                for _, row in df.iterrows():
+                    
+                    # Create Message
+                    message = row.to_dict()
+                    message['packet_id'] = str(count)
+                    message['timestamp'] = time.time()  # Add ingestion time
+                    
+                    # Produce to Topic
+                    producer.produce(
+                        topic=self.topic.name,
+                        key=message['protocol_type'],
+                        value=json.dumps(message)
+                    )
+                    
+                    logger.info(f"Produced [{count}]: {message['protocol_type']} | {message['label']}")
+                    
+                    count += 1
+                    time.sleep(sleep_time)
 
-        logger.info("Ingestion complete")
+            logger.info("Ingestion cycle complete")
 
 if __name__ == "__main__":
-    FILE_PATH = "data/kdd_train.csv"
+    FILE_PATH = "/app/data/kdd_train.csv"
     TOPIC_NAME = "network-traffic"
     
     ingestor = DataIngestion(input_file=FILE_PATH, topic_name=TOPIC_NAME)
     
-    # Run loop (Stop after 20 packets for testing)
-    ingestor.start_ingestion(limit=20, sleep_time=0.5)  
+    ingestor.start_ingestion(sleep_time=0.5)  

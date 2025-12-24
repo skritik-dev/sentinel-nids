@@ -11,7 +11,7 @@ SRC_REPO = "sentinel"
 AUTHOR_EMAIL = "skritik0710@gmail.com"
 
 setuptools.setup(
-    name=SRC_REPO,
+    name="sentinel-nids",
     version=__version__,
     author=AUTHOR_USER_NAME,
     author_email=AUTHOR_EMAIL,
