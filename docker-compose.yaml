@@ -40,7 +40,7 @@ services:
     volumes:
       - ./src:/app/src
       - ./data:/app/data
-      - ${USERPROFILE}/bentoml:/root/bentoml
+      # - ${USERPROFILE}/bentoml:/root/bentoml
     depends_on:
       - redis
 

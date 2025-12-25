@@ -10,11 +10,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src/ src/
 COPY data/ data/
 
+# Set BentoML home
 ENV BENTOML_HOME=/root/bentoml
-RUN mkdir -p $BENTOML_HOME/models/sentinel_model/latest
 
-# Copy the model from the CI builder into the image.
-COPY model_store/ $BENTOML_HOME/models/sentinel_model/latest/
+# Copy the exported model file
+COPY model_store/sentinel_model.bentomodel /tmp/sentinel_model.bentomodel
+
+# Import the model into BentoML
+RUN bentoml models import /tmp/sentinel_model.bentomodel && \
+    rm /tmp/sentinel_model.bentomodel
 
 EXPOSE 3000
 
