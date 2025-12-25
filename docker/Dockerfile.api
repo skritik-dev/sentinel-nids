@@ -8,7 +8,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy source code
 COPY src/ src/
-COPY data/ data/
 
 # Set BentoML home
 ENV BENTOML_HOME=/root/bentoml
