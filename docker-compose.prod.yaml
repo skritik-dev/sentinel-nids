@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  # ----------------------------------------
+  # Infrastructure
+  # ----------------------------------------
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:latest
+    container_name: sentinel-redpanda
+    ports:
+      - "18081:18081"
+      - "9092:9092"
+    command:
+      - redpanda
+      - start
+      - --smp 1
+      - --memory 1G
+      - --reserve-memory 0M
+      - --overprovisioned
+      - --node-id 0
+      - --check=false
+      - --kafka-addr PLAIN://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      - --advertise-kafka-addr PLAIN://redpanda:29092,OUTSIDE://localhost:9092
+      - --pandaproxy-addr 0.0.0.0:28082
+      - --advertise-pandaproxy-addr localhost:28082
+    networks:
+      - sentinel-network
+
+  redis:
+    image: redis:alpine
+    container_name: sentinel-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - sentinel-network
+
+  # ----------------------------------------
+  # App Services (Cloud Images)
+  # ----------------------------------------
+  
+  # 1. API Service
+  api:
+    image: kritik95/sentinel-api:latest  # <--- REPLACE WITH YOUR USERNAME
+    container_name: sentinel-api
+    command: bentoml serve src.sentinel.service:SentinelService --host 0.0.0.0 --port 3000
+    ports:
+      - "3000:3000"
+    environment:
+      - BENTOML_PORT=3000
+      - PYTHONPATH=/app/src  # <--- CRITICAL FIX
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - redis
+    networks:
+      - sentinel-network
+
+  # 2. Stream Processor
+  processor:
+    image: kritik95/sentinel-processor:latest # <--- REPLACE WITH YOUR USERNAME
+    container_name: sentinel-processor
+    command: python src/sentinel/components/stream_processor.py
+    environment:
+      - REDPANDA_BROKER=redpanda:29092 
+      - API_URL=http://api:3000/predict
+      - PYTHONPATH=/app/src  # <--- CRITICAL FIX
+    volumes:
+      - ./data:/app/data
+      - ./features:/app/features
+    depends_on:
+      - redpanda
+      - redis
+      - api
+    networks:
+      - sentinel-network
+
+  # 3. Dashboard
+  dashboard:
+    image: kritik95/sentinel-dashboard:latest # <--- REPLACE WITH YOUR USERNAME
+    container_name: sentinel-dashboard
+    command: streamlit run src/sentinel/dashboard.py --server.port 8502 --server.address 0.0.0.0
+    ports:
+      - "8502:8502"
+    environment:
+      - PYTHONPATH=/app/src  # <--- CRITICAL FIX
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - processor
+    networks:
+      - sentinel-network
+
+  # 4. Producer
+  producer:
+    image: kritik95/sentinel-producer:latest 
+    container_name: sentinel-producer
+    command: python src/sentinel/components/data_ingestion.py
+    environment:
+      - REDPANDA_BROKER=redpanda:29092
+      - PYTHONPATH=/app/src   
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - redpanda
+    networks:
+      - sentinel-network
+
+networks:
+  sentinel-network:
+    driver: bridge
