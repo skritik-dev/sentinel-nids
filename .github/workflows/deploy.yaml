@@ -1,10 +1,8 @@
   name: Train & Deploy
 
-  # Trigger manually or on schedule
+  # Trigger manually
   on:
     workflow_dispatch:
-    # schedule:
-    #   - cron: '0 0 * * 0' # Weekly on Sundays
 
   env:
     DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/sentinel-api
@@ -39,15 +37,15 @@
           python src/sentinel/models/train.py
           
       # Export the trained model to docker
-      # We need to move the saved model from the hidden system folder to the current folder so Docker can copy it
       - name: Export Model
         env:
           BENTOML_HOME: ${{ github.workspace }}/bento_storage
         run: |
-          echo "Checking the structure of BENTOML_HOME"
-          ls -R $BENTOML_HOME
           echo "Checking BentoML registry"
           bentoml models list
+          echo "Exporting model to directory"
+          mkdir -p model_store
+          bentoml models export sentinel_model:latest model_store/sentinel_model.bentomodel
 
       # Login to Docker Hub
       - name: Login to Docker Hub
@@ -57,7 +55,6 @@
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       # Build and Push Docker Image
-      # We modify the context to include the model we just exported
       - name: Build and Push
         uses: docker/build-push-action@v4
         with:
@@ -65,6 +62,5 @@
           file: docker/Dockerfile.api
           push: true
           tags: ${{ env.DOCKER_IMAGE }}:latest
-          # We pass the model folder into the build
           build-args: |
             MODEL_PATH=model_store

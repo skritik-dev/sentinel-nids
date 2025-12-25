@@ -1,16 +1,17 @@
 import os
 import sys
-import pandas as pd
 import bentoml
+import pandas as pd
+from pathlib import Path
 from sklearn.ensemble import IsolationForest
-from streamlit import columns
 from sentinel.logger import get_logger
 
 logger = get_logger("ModelTraining")
 
-#? For docker environments, these paths should have "app/" prefix
-OLD_DATA_PATH = "data/kdd_train.parquet"
-NEW_DATA_PATH = "data/live_traffic.csv"
+BASE_DIR = Path(__file__).resolve().parents[3]
+DATA_DIR = BASE_DIR / "data"
+OLD_DATA_PATH = DATA_DIR / "kdd_train.parquet"
+NEW_DATA_PATH = DATA_DIR / "live_traffic.csv"
 
 #? I'll use numerical features for my Isolation Forest
 FEATURES = [
@@ -91,9 +92,6 @@ def train_model():
     
     logger.info(f"Model saved: {bento_model.tag}")
     logger.info(f"Model path: {bento_model.path}")
-
-    with open("bento_model_path.txt", "w") as f:
-        f.write(str(bento_model.path))
 
 if __name__ == "__main__":
     train_model()
