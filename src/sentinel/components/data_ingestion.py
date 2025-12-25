@@ -1,6 +1,7 @@
 import os
 import time
 import json
+import random
 import pandas as pd
 from quixstreams import Application
 from sentinel.logger import get_logger
@@ -32,7 +33,7 @@ class DataIngestion:
         self.app = Application(broker_address=self.broker_addr, consumer_group="ingestion-producer")
         self.topic = self.app.topic(name=self.topic_name, value_serializer="json")
 
-    def start_ingestion(self, sleep_time: float = 0.5):
+    def start_ingestion(self):
         """
         Reads CSV and streams data to Redpanda.
         """
@@ -68,14 +69,12 @@ class DataIngestion:
                     logger.info(f"Produced [{count}]: {message['protocol_type']} | {message['label']}")
                     
                     count += 1
-                    time.sleep(sleep_time)
-
-            logger.info("Ingestion cycle complete")
-
+                    time.sleep(random.uniform(0.1, 1.0))
+                    
 if __name__ == "__main__":
     FILE_PATH = "/app/data/kdd_train.csv"
     TOPIC_NAME = "network-traffic"
     
     ingestor = DataIngestion(input_file=FILE_PATH, topic_name=TOPIC_NAME)
     
-    ingestor.start_ingestion(sleep_time=0.5)  
+    ingestor.start_ingestion()  

@@ -94,12 +94,13 @@ services:
   producer:
     image: kritik95/sentinel-producer:latest 
     container_name: sentinel-producer
-    command: python src/sentinel/components/data_ingestion.py
+    command: python src/sentinel/components/live_producer.py
     environment:
       - REDPANDA_BROKER=redpanda:29092
       - PYTHONPATH=/app/src   
     volumes:
       - ./data:/app/data
+      - ./src:/app/src
     depends_on:
       - redpanda
     networks:
