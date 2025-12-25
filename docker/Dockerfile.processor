@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy source code and config
+COPY src/ src/
+COPY data/ data/
+# Create features directory for logging
+RUN mkdir -p features
+
+# Set Python path so it finds 'src'
+ENV PYTHONPATH=/app/src
+
+# Run the Processor
+CMD ["python", "src/sentinel/components/stream_processor.py"]

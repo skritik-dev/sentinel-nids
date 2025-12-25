@@ -20,12 +20,6 @@ venv/
 env/
 .env
 
-# Data & models (exclude generated data, but keep specific models if needed)
-data/
-*.pkl
-*.h5
-*.bento
-
 # Logs
 logs/
 *.log
