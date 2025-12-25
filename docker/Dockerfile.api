@@ -1,24 +1,24 @@
-FROM python:3.11-slim
+    FROM python:3.11-slim
 
-WORKDIR /app
+    WORKDIR /app
 
-# Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+    # Install dependencies
+    COPY requirements.txt .
+    RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source code
-COPY src/ src/
+    # Copy source code
+    COPY src/ src/
 
-# Set BentoML home
-ENV BENTOML_HOME=/root/bentoml
+    # Set BentoML home
+    ENV BENTOML_HOME=/root/bentoml
 
-# Copy the exported model file
-COPY model_store/sentinel_model.bentomodel /tmp/sentinel_model.bentomodel
+    # Copy the exported model file
+    COPY model_store/sentinel_model.bentomodel /tmp/sentinel_model.bentomodel
 
-# Import the model into BentoML
-RUN bentoml models import /tmp/sentinel_model.bentomodel && \
-    rm /tmp/sentinel_model.bentomodel
+    # Import the model into BentoML
+    RUN bentoml models import /tmp/sentinel_model.bentomodel && \
+        rm /tmp/sentinel_model.bentomodel
 
-EXPOSE 3000
+    EXPOSE 3000
 
-CMD ["bentoml", "serve", "src.sentinel.service:SentinelService", "--host", "0.0.0.0", "--port", "3000"]
+    CMD ["bentoml", "serve", "src.sentinel.service:SentinelService", "--host", "0.0.0.0", "--port", "3000"]
